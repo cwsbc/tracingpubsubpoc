@@ -1,0 +1,33 @@
+extensions: []
+
+receivers:
+  jaeger:
+    protocols:
+      grpc:
+      thrift_binary:
+      thrift_compact:
+      thrift_http:
+  prometheus: []
+
+processors:
+  batch:
+
+exporters:
+  logging:
+    logLevel: debug
+  jaeger:
+    endpoint: "jaeger:14250"
+    tls:
+      insecure: true
+
+service:
+  telemetry:
+    metrics:
+      level: none
+  extensions: []
+  pipelines:
+    traces:
+      receivers: [jaeger]
+      processors: [batch]
+      exporters: [logging, jaeger]
+

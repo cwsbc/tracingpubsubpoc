@@ -1,0 +1,42 @@
+---
+version: "3.9"
+services:
+  server:
+    build:
+      context: python/
+    ports:
+      - "5555:5555"
+    links:
+      - pubsub
+    environment: &env
+      - PUBSUB_PROJECT_ID=bluecore-tracepubsub-poc
+      - PUBSUB_EMULATOR_HOST=pubsub:8085
+      - PUBSUB_TOPIC=bluecoregaetraces
+  pubsub:
+    image: gcr.io/google.com/cloudsdktool/cloud-sdk:emulators
+    command:
+      - gcloud
+      - beta
+      - emulators
+      - pubsub
+      - start
+      - --host-port=0.0.0.0:8085
+      - --project=bluecore-tracepubsub-poc
+  relay:
+    build:
+      context: relay/
+    environment: *env
+
+  otel:
+    image: otel/opentelemetry-collector:0.54.0
+    command:
+      - --config=/etc/otel/config.yaml
+    ports:
+      - "55679:55679"
+    volumes:
+      - "${PWD}/resources/otel-collector-config.yaml:/etc/otel/config.yaml"
+
+  jaeger:
+    image: jaegertracing/all-in-one
+    ports:
+      - 16686:16686
